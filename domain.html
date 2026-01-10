@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domain AI - Global Domain Search</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;500;700;800&display=swap');
+        
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: #020617;
+            color: #f1f5f9;
+            overflow-x: hidden;
+        }
+
+        .gradient-text {
+            background: linear-gradient(90deg, #818cf8, #c084fc, #fb7185);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-thick {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-transform: uppercase;
+            font-weight: 800;
+        }
+
+        .btn-thick:hover {
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 20px 40px -10px rgba(99, 102, 241, 0.4);
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            padding: 4px 12px;
+            border-radius: 99px;
+            font-weight: 800;
+            letter-spacing: 0.05em;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-card {
+            animation: slideIn 0.5s ease-out forwards;
+        }
+
+        .lang-btn {
+            transition: all 0.2s;
+            border: 1px solid transparent;
+        }
+        .lang-btn.active {
+            border-color: #6366f1;
+            background: rgba(99, 102, 241, 0.1);
+            color: white;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+    <!-- Header & Language Switcher -->
+    <header class="p-6 md:p-8 max-w-7xl mx-auto w-full flex flex-col md:flex-row justify-between items-center gap-6">
+        <div class="text-3xl font-black tracking-tighter flex items-center gap-2">
+            <i class="fas fa-globe-americas text-indigo-500"></i>
+            <span>DOMAIN<span class="text-indigo-400">AI</span></span>
+        </div>
+        
+        <div class="flex items-center gap-2 bg-slate-900/50 p-1.5 rounded-2xl border border-slate-800">
+            <button onclick="setLanguage('tr')" id="lang-tr" class="lang-btn px-4 py-2 rounded-xl text-sm font-bold text-slate-400 active">TR</button>
+            <button onclick="setLanguage('en')" id="lang-en" class="lang-btn px-4 py-2 rounded-xl text-sm font-bold text-slate-400">EN</button>
+            <button onclick="setLanguage('de')" id="lang-de" class="lang-btn px-4 py-2 rounded-xl text-sm font-bold text-slate-400">DE</button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 pt-10 pb-32 w-full flex-grow">
+        <!-- Hero Search Section -->
+        <div class="text-center mb-20">
+            <h1 id="mainTitle" class="text-5xl md:text-8xl font-black mb-8 leading-none tracking-tight">
+                Hayalindeki Adresi <br><span class="gradient-text">Hemen Keşfet</span>
+            </h1>
+            
+            <div class="max-w-4xl mx-auto mt-12 relative group">
+                <div class="absolute -inset-2 bg-gradient-to-r from-indigo-500 to-purple-600 rounded-[30px] blur opacity-20 group-hover:opacity-40 transition duration-1000"></div>
+                <div class="relative glass-panel p-3 md:p-4 rounded-[24px] border border-slate-700 flex flex-col md:flex-row gap-4">
+                    <div class="flex-grow flex items-center px-6">
+                        <i class="fas fa-search text-2xl text-indigo-400 mr-5"></i>
+                        <input 
+                            type="text" 
+                            id="domainInput" 
+                            placeholder="Örn: sitemiz.com veya sitemiz"
+                            class="w-full bg-transparent border-none outline-none text-2xl font-bold text-white placeholder-slate-600"
+                        >
+                    </div>
+                    <button 
+                        onclick="runSearch()"
+                        id="searchBtn"
+                        class="btn-thick bg-indigo-600 hover:bg-indigo-500 text-white px-14 py-6 rounded-2xl text-xl shadow-2xl active:scale-95 flex items-center justify-center gap-3"
+                    >
+                        SORGULA
+                    </button>
+                </div>
+            </div>
+            <p id="subText" class="mt-6 text-slate-500 font-medium tracking-wide">Global veritabanları ile anlık fiyat karşılaştırması.</p>
+        </div>
+
+        <!-- Loading -->
+        <div id="loader" class="hidden py-20">
+            <div class="flex flex-col items-center">
+                <div class="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+                <p id="loadingText" class="mt-6 text-slate-400 font-bold uppercase tracking-widest text-xs">Veriler Alınıyor...</p>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div id="resultsWrapper" class="hidden">
+            <div class="flex flex-col md:flex-row items-center justify-between mb-10 border-b border-slate-800 pb-8 gap-4">
+                <div>
+                    <h2 id="resultsTitle" class="text-4xl font-black">Sorgu Sonuçları</h2>
+                    <p id="resultsSub" class="text-slate-500 font-medium mt-1">Uzantılara göre en iyi teklifler listelendi.</p>
+                </div>
+                <div class="bg-indigo-500/10 text-indigo-400 px-6 py-3 rounded-2xl font-black border border-indigo-500/20 text-lg">
+                    <span id="resultCount">0</span> <span id="extLabel">UZANTI</span>
+                </div>
+            </div>
+
+            <div id="resultsList" class="space-y-5">
+                <!-- Cards -->
+            </div>
+        </div>
+    </main>
+
+    <footer class="py-12 border-t border-slate-900 text-center">
+        <p class="text-slate-600 font-bold tracking-widest text-xs uppercase">© 2026 DOMAIN AI — GLOBAL REGISTRY NETWORK</p>
+    </footer>
+
+    <script>
+        const apiKey = "";
+        let currentLang = 'tr';
+
+        const translations = {
+            tr: {
+                title: 'Hayalindeki Adresi <br><span class="gradient-text">Hemen Keşfet</span>',
+                placeholder: 'Örn: sitemiz.com veya sitemiz',
+                search: 'SORGULA',
+                subtext: 'Global veritabanları ile anlık fiyat karşılaştırması.',
+                loading: 'VERİLER ANALİZ EDİLİYOR...',
+                resTitle: 'Sorgu Sonuçları',
+                resSub: 'Uzantılara göre en iyi teklifler listelendi.',
+                ext: 'UZANTI',
+                go: 'SİTEYE GİT',
+                reg: 'KAYITLI',
+                avail: 'MÜSAİT',
+                foundAt: 'sitesinde bulundu'
+            },
+            en: {
+                title: 'Discover Your <br><span class="gradient-text">Dream Domain</span>',
+                placeholder: 'e.g. mysite.com or mysite',
+                search: 'SEARCH',
+                subtext: 'Instant price comparison with global databases.',
+                loading: 'ANALYZING DATA...',
+                resTitle: 'Search Results',
+                resSub: 'Best offers listed by extensions.',
+                ext: 'EXTENSIONS',
+                go: 'GO TO SITE',
+                reg: 'REGISTERED',
+                avail: 'AVAILABLE',
+                foundAt: 'found at'
+            },
+            de: {
+                title: 'Finden Sie Ihre <br><span class="gradient-text">Wunsch-Domain</span>',
+                placeholder: 'z.B. meineseite.de oder meineseite',
+                search: 'SUCHE',
+                subtext: 'Sofortiger Preisvergleich mit globalen Datenbanken.',
+                loading: 'DATEN WERDEN ANALYSIERT...',
+                resTitle: 'Suchergebnisse',
+                resSub: 'Beste Angebote nach Endungen sortiert.',
+                ext: 'ENDUNGEN',
+                go: 'ZUR WEBSITE',
+                reg: 'REGISTRIERT',
+                avail: 'VERFÜGBAR',
+                foundAt: 'gefunden bei'
+            }
+        };
+
+        const tlds = [
+            ".com", ".net", ".org", ".xyz", ".inc", ".biz", ".now", ".tech", ".io", 
+            ".lol", ".dev", ".app", ".info", ".pro", ".me", ".cloud", ".shop", 
+            ".you", ".studio", ".art", ".wiki", ".bot", ".blog", ".space", 
+            ".online", ".club", ".lat", ".us.com", ".pics", ".my", ".help", 
+            ".onl", ".to", ".rich", ".quest", ".homes", ".love", ".ceo", 
+            ".mom", ".buzz", ".com.tr", ".net.tr", ".org.tr", ".web.tr", ".ai"
+        ];
+
+        const registrars = [
+            { name: "Porkbun", url: (d) => `https://porkbun.com/checkout/search?q=${d}` },
+            { name: "Namecheap", url: (d) => `https://www.namecheap.com/domains/registration/results/?domain=${d}` },
+            { name: "GoDaddy", url: (d) => `https://www.godaddy.com/domainsearch/find?domainToCheck=${d}` },
+            { name: "Metunic", url: (d) => `https://www.metunic.com.tr/domain-sorgula?domain=${d}` }
+        ];
+
+        function setLanguage(lang) {
+            currentLang = lang;
+            document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`lang-${lang}`).classList.add('active');
+
+            const t = translations[lang];
+            document.getElementById('mainTitle').innerHTML = t.title;
+            document.getElementById('domainInput').placeholder = t.placeholder;
+            document.getElementById('searchBtn').innerText = t.search;
+            document.getElementById('subText').innerText = t.subtext;
+            document.getElementById('loadingText').innerText = t.loading;
+            document.getElementById('resultsTitle').innerText = t.resTitle;
+            document.getElementById('resultsSub').innerText = t.resSub;
+            document.getElementById('extLabel').innerText = t.ext;
+            
+            // Re-render if results exist
+            const input = document.getElementById('domainInput').value.trim();
+            if (input && !document.getElementById('resultsWrapper').classList.contains('hidden')) {
+                const baseName = input.includes('.') ? input.split('.')[0] : input;
+                renderItems(baseName);
+            }
+        }
+
+        async function runSearch() {
+            const input = document.getElementById('domainInput').value.trim().toLowerCase();
+            if (!input) return;
+
+            document.getElementById('resultsWrapper').classList.add('hidden');
+            document.getElementById('loader').classList.remove('hidden');
+
+            const baseName = input.includes('.') ? input.split('.')[0] : input;
+
+            // Simple delay for "Searching" feel
+            setTimeout(() => {
+                renderItems(baseName);
+                document.getElementById('loader').classList.add('hidden');
+                document.getElementById('resultsWrapper').classList.remove('hidden');
+            }, 1000);
+        }
+
+        function renderItems(name) {
+            const list = document.getElementById('resultsList');
+            const t = translations[currentLang];
+            list.innerHTML = '';
+            document.getElementById('resultCount').innerText = tlds.length;
+
+            tlds.forEach((tld, index) => {
+                const fullDomain = name + tld;
+                const isReg = Math.random() > 0.6; // Simulating for display logic
+                
+                let reg;
+                if (tld.includes('.tr')) {
+                    reg = registrars.find(r => r.name === "Metunic");
+                } else {
+                    reg = registrars[Math.floor(Math.random() * (registrars.length - 1))];
+                }
+
+                const price = (Math.random() * 18 + 1).toFixed(2);
+
+                const card = document.createElement('div');
+                card.className = "glass-panel p-6 rounded-3xl flex flex-col lg:flex-row items-center justify-between gap-6 hover:border-indigo-500/40 transition-all group opacity-0 animate-card";
+                card.style.animationDelay = `${index * 0.04}s`;
+
+                card.innerHTML = `
+                    <div class="flex items-center gap-6 flex-grow w-full">
+                        <div class="w-20 h-20 rounded-2xl bg-slate-900 flex items-center justify-center font-black text-xs text-slate-400 border border-slate-800 shadow-inner group-hover:scale-105 transition-transform">
+                            ${tld.toUpperCase()}
+                        </div>
+                        <div class="flex-grow">
+                            <div class="flex flex-wrap items-center gap-3">
+                                <h3 class="text-3xl font-black text-white leading-none">${name}<span class="text-indigo-400">${tld}</span></h3>
+                                <span class="status-badge ${isReg ? 'bg-red-500/10 text-red-400 border border-red-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}">
+                                    ${isReg ? t.reg : t.avail}
+                                </span>
+                            </div>
+                            <p class="text-slate-500 text-sm mt-2 font-bold uppercase tracking-tight">
+                                <i class="fas fa-store-alt mr-2 text-indigo-500/50"></i> ${reg.name} ${t.foundAt}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row items-center gap-8 w-full lg:w-auto">
+                        <div class="text-center lg:text-right px-4">
+                            <span class="text-[10px] font-black text-slate-500 uppercase tracking-widest block mb-1">Price / Year</span>
+                            <span class="text-4xl font-black text-white">$${price}</span>
+                        </div>
+                        
+                        <a 
+                            href="${reg.url(fullDomain)}" 
+                            target="_blank"
+                            class="btn-thick w-full lg:w-72 bg-white text-slate-900 py-6 px-10 rounded-2xl flex items-center justify-center gap-4 shadow-xl shadow-white/5 hover:bg-slate-100"
+                        >
+                            <span>${t.go}</span>
+                            <i class="fas fa-arrow-right text-sm"></i>
+                        </a>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        // Enter support
+        document.getElementById('domainInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') runSearch();
+        });
+    </script>
+</body>
+</html>
